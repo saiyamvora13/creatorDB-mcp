@@ -38,7 +38,7 @@ function sanitizeId(id: string): string {
 async function makeApiRequest<T = unknown>(
   endpoint: string,
   method: "GET" | "POST" = "GET",
-  body?: Record<string, unknown>
+  body?: unknown
 ): Promise<T> {
   if (!API_KEY) {
     throw new ApiError("CREATORDB_API_KEY environment variable is required", 500);

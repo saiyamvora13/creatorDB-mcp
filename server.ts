@@ -43,7 +43,7 @@ function sanitizeId(id: string): string {
 async function makeApiRequest<T = unknown>(
   endpoint: string,
   method: "GET" | "POST" = "GET",
-  body?: Record<string, unknown>
+  body?: unknown
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
