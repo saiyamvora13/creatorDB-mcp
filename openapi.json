@@ -1,0 +1,441 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CreatorDB API",
+    "description": "Influencer marketing data API for Instagram, YouTube, and TikTok creators. Search, analyze profiles, get performance metrics, audience demographics, and more.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://YOUR_REPLIT_URL_HERE"
+    }
+  ],
+  "paths": {
+    "/api/usage": {
+      "get": {
+        "operationId": "getApiUsage",
+        "summary": "Get API usage statistics",
+        "description": "Get API usage statistics for the authenticated user within a specified date range (max 365 days).",
+        "parameters": [
+          {"name": "start", "in": "query", "schema": {"type": "string"}, "description": "Start unix timestamp in milliseconds"},
+          {"name": "end", "in": "query", "schema": {"type": "string"}, "description": "End unix timestamp in milliseconds"}
+        ],
+        "responses": {"200": {"description": "Usage statistics"}}
+      }
+    },
+    "/api/instagram/profile": {
+      "get": {
+        "operationId": "getInstagramProfile",
+        "summary": "Get Instagram creator profile",
+        "description": "Get complete Instagram creator profile including metadata, statistics, hashtags, niches, and content analysis.",
+        "parameters": [
+          {"name": "uniqueId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "Instagram account ID (e.g., 'instagram' or '@instagram')"}
+        ],
+        "responses": {"200": {"description": "Creator profile data"}}
+      }
+    },
+    "/api/instagram/contact": {
+      "get": {
+        "operationId": "getInstagramContact",
+        "summary": "Get Instagram creator contact info",
+        "description": "Retrieve contact information (emails) for an Instagram creator.",
+        "parameters": [
+          {"name": "uniqueId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "Instagram account ID"}
+        ],
+        "responses": {"200": {"description": "Contact information"}}
+      }
+    },
+    "/api/instagram/content-detail": {
+      "get": {
+        "operationId": "getInstagramContentDetail",
+        "summary": "Get Instagram content details",
+        "description": "Get detailed information about specific Instagram content by content ID.",
+        "parameters": [
+          {"name": "contentId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "Instagram content ID"}
+        ],
+        "responses": {"200": {"description": "Content details"}}
+      }
+    },
+    "/api/instagram/performance": {
+      "get": {
+        "operationId": "getInstagramPerformance",
+        "summary": "Get Instagram performance metrics",
+        "description": "Get advanced performance metrics including engagement rates, likes, comments, and consistency scores.",
+        "parameters": [
+          {"name": "uniqueId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "Instagram account ID"}
+        ],
+        "responses": {"200": {"description": "Performance metrics"}}
+      }
+    },
+    "/api/instagram/performance-history": {
+      "get": {
+        "operationId": "getInstagramPerformanceHistory",
+        "summary": "Get Instagram performance history",
+        "description": "Get historical performance data for an Instagram creator over time.",
+        "parameters": [
+          {"name": "uniqueId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "Instagram account ID"}
+        ],
+        "responses": {"200": {"description": "Historical performance data"}}
+      }
+    },
+    "/api/instagram/sponsorship": {
+      "get": {
+        "operationId": "getInstagramSponsorship",
+        "summary": "Get Instagram sponsorship data",
+        "description": "Get sponsorship/branded content information for an Instagram creator.",
+        "parameters": [
+          {"name": "uniqueId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "Instagram account ID"}
+        ],
+        "responses": {"200": {"description": "Sponsorship data"}}
+      }
+    },
+    "/api/instagram/audience": {
+      "get": {
+        "operationId": "getInstagramAudience",
+        "summary": "Get Instagram audience demographics",
+        "description": "Get audience demographic insights including country distribution, gender breakdown, and age composition.",
+        "parameters": [
+          {"name": "uniqueId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "Instagram account ID"}
+        ],
+        "responses": {"200": {"description": "Audience demographics"}}
+      }
+    },
+    "/api/instagram/search": {
+      "post": {
+        "operationId": "searchInstagram",
+        "summary": "Search Instagram creators",
+        "description": "Search for Instagram creators using advanced filters. Supports filtering by displayName, follower count, engagement rate, country, language, niches, and more.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["filters"],
+                "properties": {
+                  "filters": {
+                    "type": "array",
+                    "description": "Array of filter objects. Each filter has: filterName, op ('in', '>', '=', '<'), value, isFuzzySearch (optional)",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "filterName": {"type": "string", "description": "Field to filter (displayName, totalFollowers, country, mainLanguage, niches, avgEngagementRate, isVerified)"},
+                        "op": {"type": "string", "enum": ["in", ">", "=", "<"]},
+                        "value": {"description": "Filter value"},
+                        "isFuzzySearch": {"type": "boolean"}
+                      }
+                    }
+                  },
+                  "pageSize": {"type": "integer", "default": 20, "minimum": 1, "maximum": 100},
+                  "offset": {"type": "integer", "default": 0},
+                  "sortBy": {"type": "string"},
+                  "desc": {"type": "boolean", "default": true}
+                }
+              }
+            }
+          }
+        },
+        "responses": {"200": {"description": "Search results"}}
+      }
+    },
+    "/api/instagram/natural-language-search": {
+      "post": {
+        "operationId": "searchInstagramNaturalLanguage",
+        "summary": "Search Instagram with natural language",
+        "description": "Search Instagram creators using natural language. AI converts your plain text query into structured filters.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {"type": "string", "description": "Natural language search query (e.g., 'fashion influencers in USA with over 100k followers')"},
+                  "pageSize": {"type": "integer", "default": 20},
+                  "offset": {"type": "integer", "default": 0}
+                }
+              }
+            }
+          }
+        },
+        "responses": {"200": {"description": "Search results"}}
+      }
+    },
+    "/api/instagram/niches": {
+      "get": {
+        "operationId": "getInstagramNiches",
+        "summary": "Get Instagram niches",
+        "description": "Get all available Instagram niches with their categories and creator counts.",
+        "responses": {"200": {"description": "List of niches"}}
+      }
+    },
+    "/api/youtube/profile": {
+      "get": {
+        "operationId": "getYoutubeProfile",
+        "summary": "Get YouTube creator profile",
+        "description": "Get complete YouTube creator profile including metadata, subscriber count, categories, hashtags, topics, niches, pricing estimates, and related creators.",
+        "parameters": [
+          {"name": "channelId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "YouTube channel ID (format: UC followed by 22 characters)"}
+        ],
+        "responses": {"200": {"description": "Creator profile data"}}
+      }
+    },
+    "/api/youtube/search": {
+      "post": {
+        "operationId": "searchYoutube",
+        "summary": "Search YouTube creators",
+        "description": "Search for YouTube creators using advanced filters including subscriber count, engagement, country, language, topics, and niches.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["filters"],
+                "properties": {
+                  "filters": {"type": "array", "items": {"type": "object"}},
+                  "pageSize": {"type": "integer", "default": 20},
+                  "offset": {"type": "integer", "default": 0},
+                  "sortBy": {"type": "string"},
+                  "desc": {"type": "boolean", "default": true}
+                }
+              }
+            }
+          }
+        },
+        "responses": {"200": {"description": "Search results"}}
+      }
+    },
+    "/api/youtube/performance": {
+      "get": {
+        "operationId": "getYoutubePerformance",
+        "summary": "Get YouTube performance metrics",
+        "description": "Get YouTube creator performance metrics including view counts, engagement rates, and content statistics.",
+        "parameters": [
+          {"name": "channelId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "YouTube channel ID"}
+        ],
+        "responses": {"200": {"description": "Performance metrics"}}
+      }
+    },
+    "/api/youtube/performance-history": {
+      "get": {
+        "operationId": "getYoutubePerformanceHistory",
+        "summary": "Get YouTube performance history",
+        "description": "Get historical performance data for a YouTube creator.",
+        "parameters": [
+          {"name": "channelId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "YouTube channel ID"}
+        ],
+        "responses": {"200": {"description": "Historical data"}}
+      }
+    },
+    "/api/youtube/content-detail": {
+      "get": {
+        "operationId": "getYoutubeContentDetail",
+        "summary": "Get YouTube video details",
+        "description": "Get detailed information about a specific YouTube video.",
+        "parameters": [
+          {"name": "contentId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "YouTube video ID"}
+        ],
+        "responses": {"200": {"description": "Video details"}}
+      }
+    },
+    "/api/youtube/sponsorship": {
+      "get": {
+        "operationId": "getYoutubeSponsorship",
+        "summary": "Get YouTube sponsorship data",
+        "description": "Get sponsorship/branded content data for a YouTube creator.",
+        "parameters": [
+          {"name": "channelId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "YouTube channel ID"}
+        ],
+        "responses": {"200": {"description": "Sponsorship data"}}
+      }
+    },
+    "/api/youtube/contact": {
+      "get": {
+        "operationId": "getYoutubeContact",
+        "summary": "Get YouTube contact info",
+        "description": "Get contact information for a YouTube creator.",
+        "parameters": [
+          {"name": "channelId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "YouTube channel ID"}
+        ],
+        "responses": {"200": {"description": "Contact information"}}
+      }
+    },
+    "/api/youtube/audience": {
+      "get": {
+        "operationId": "getYoutubeAudience",
+        "summary": "Get YouTube audience demographics",
+        "description": "Get audience demographic insights for a YouTube creator including location, gender, and age breakdown.",
+        "parameters": [
+          {"name": "channelId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "YouTube channel ID"}
+        ],
+        "responses": {"200": {"description": "Audience demographics"}}
+      }
+    },
+    "/api/youtube/natural-language-search": {
+      "post": {
+        "operationId": "searchYoutubeNaturalLanguage",
+        "summary": "Search YouTube with natural language",
+        "description": "Search YouTube creators using natural language queries.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {"type": "string"},
+                  "pageSize": {"type": "integer", "default": 20},
+                  "offset": {"type": "integer", "default": 0}
+                }
+              }
+            }
+          }
+        },
+        "responses": {"200": {"description": "Search results"}}
+      }
+    },
+    "/api/youtube/topics": {
+      "get": {
+        "operationId": "getYoutubeTopics",
+        "summary": "Get YouTube topics",
+        "description": "Get all available YouTube topics (content categories) with creator counts.",
+        "responses": {"200": {"description": "List of topics"}}
+      }
+    },
+    "/api/youtube/niches": {
+      "get": {
+        "operationId": "getYoutubeNiches",
+        "summary": "Get YouTube niches",
+        "description": "Get all available YouTube niches with categories and creator counts.",
+        "responses": {"200": {"description": "List of niches"}}
+      }
+    },
+    "/api/tiktok/profile": {
+      "get": {
+        "operationId": "getTiktokProfile",
+        "summary": "Get TikTok creator profile",
+        "description": "Get complete TikTok creator profile including metadata, follower stats, hashtags, niches, and content analysis.",
+        "parameters": [
+          {"name": "uniqueId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "TikTok account ID (e.g., 'tiktok' or '@tiktok')"}
+        ],
+        "responses": {"200": {"description": "Creator profile data"}}
+      }
+    },
+    "/api/tiktok/search": {
+      "post": {
+        "operationId": "searchTiktok",
+        "summary": "Search TikTok creators",
+        "description": "Search for TikTok creators using advanced filters including follower count, engagement, country, language, and niches.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["filters"],
+                "properties": {
+                  "filters": {"type": "array", "items": {"type": "object"}},
+                  "pageSize": {"type": "integer", "default": 20},
+                  "offset": {"type": "integer", "default": 0},
+                  "sortBy": {"type": "string"},
+                  "desc": {"type": "boolean", "default": true}
+                }
+              }
+            }
+          }
+        },
+        "responses": {"200": {"description": "Search results"}}
+      }
+    },
+    "/api/tiktok/contact": {
+      "get": {
+        "operationId": "getTiktokContact",
+        "summary": "Get TikTok contact info",
+        "description": "Get contact information for a TikTok creator.",
+        "parameters": [
+          {"name": "uniqueId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "TikTok account ID"}
+        ],
+        "responses": {"200": {"description": "Contact information"}}
+      }
+    },
+    "/api/tiktok/performance": {
+      "get": {
+        "operationId": "getTiktokPerformance",
+        "summary": "Get TikTok performance metrics",
+        "description": "Get TikTok creator performance metrics including view counts, engagement rates, and content statistics.",
+        "parameters": [
+          {"name": "uniqueId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "TikTok account ID"}
+        ],
+        "responses": {"200": {"description": "Performance metrics"}}
+      }
+    },
+    "/api/tiktok/performance-history": {
+      "get": {
+        "operationId": "getTiktokPerformanceHistory",
+        "summary": "Get TikTok performance history",
+        "description": "Get historical performance data for a TikTok creator.",
+        "parameters": [
+          {"name": "uniqueId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "TikTok account ID"}
+        ],
+        "responses": {"200": {"description": "Historical data"}}
+      }
+    },
+    "/api/tiktok/content-detail": {
+      "get": {
+        "operationId": "getTiktokContentDetail",
+        "summary": "Get TikTok video details",
+        "description": "Get detailed information about a specific TikTok video.",
+        "parameters": [
+          {"name": "contentId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "TikTok content ID"}
+        ],
+        "responses": {"200": {"description": "Video details"}}
+      }
+    },
+    "/api/tiktok/audience": {
+      "get": {
+        "operationId": "getTiktokAudience",
+        "summary": "Get TikTok audience demographics",
+        "description": "Get audience demographic insights for a TikTok creator including location, gender, and age breakdown.",
+        "parameters": [
+          {"name": "uniqueId", "in": "query", "required": true, "schema": {"type": "string"}, "description": "TikTok account ID"}
+        ],
+        "responses": {"200": {"description": "Audience demographics"}}
+      }
+    },
+    "/api/tiktok/natural-language-search": {
+      "post": {
+        "operationId": "searchTiktokNaturalLanguage",
+        "summary": "Search TikTok with natural language",
+        "description": "Search TikTok creators using natural language queries.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {"type": "string"},
+                  "pageSize": {"type": "integer", "default": 20},
+                  "offset": {"type": "integer", "default": 0}
+                }
+              }
+            }
+          }
+        },
+        "responses": {"200": {"description": "Search results"}}
+      }
+    },
+    "/api/tiktok/niches": {
+      "get": {
+        "operationId": "getTiktokNiches",
+        "summary": "Get TikTok niches",
+        "description": "Get all available TikTok niches with categories and creator counts.",
+        "responses": {"200": {"description": "List of niches"}}
+      }
+    }
+  }
+}
