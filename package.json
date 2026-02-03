@@ -3,14 +3,15 @@
   "version": "1.0.0",
   "description": "MCP Server for CreatorDB API - Influencer Marketing Data",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "api/index.ts",
   "bin": {
     "creatordb-mcp": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsx src/index.ts"
+    "dev": "tsx server.ts",
+    "vercel-build": "echo 'No build needed'"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
