@@ -28,6 +28,18 @@ interface SearchRequest {
   desc?: boolean;
 }
 
+class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+function sanitizeId(id: string): string {
+  return encodeURIComponent(id.replace(/^@/, ""));
+}
+
 async function makeApiRequest<T = unknown>(
   endpoint: string,
   method: "GET" | "POST" = "GET",
@@ -51,12 +63,21 @@ async function makeApiRequest<T = unknown>(
   const data = await response.json();
 
   if (!response.ok || data.success === false) {
-    throw new Error(
-      data.errorDescription || data.message || `API Error: ${response.status}`
+    throw new ApiError(
+      data.errorDescription || data.message || `API Error: ${response.status}`,
+      response.status
     );
   }
 
   return data as T;
+}
+
+function handleError(error: unknown, res: Response) {
+  if (error instanceof ApiError) {
+    res.status(error.status).json({ success: false, error: error.message });
+  } else {
+    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+  }
 }
 
 app.get("/api/usage", async (req: Request, res: Response) => {
@@ -68,7 +89,7 @@ app.get("/api/usage", async (req: Request, res: Response) => {
     const result = await makeApiRequest(`/usage${queryString ? `?${queryString}` : ""}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -76,10 +97,10 @@ app.get("/api/instagram/profile", async (req: Request, res: Response) => {
   try {
     const { uniqueId } = req.query;
     if (!uniqueId) return res.status(400).json({ success: false, error: "uniqueId is required" });
-    const result = await makeApiRequest(`/instagram/profile?uniqueId=${uniqueId}`);
+    const result = await makeApiRequest(`/instagram/profile?uniqueId=${sanitizeId(String(uniqueId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -87,10 +108,10 @@ app.get("/api/instagram/contact", async (req: Request, res: Response) => {
   try {
     const { uniqueId } = req.query;
     if (!uniqueId) return res.status(400).json({ success: false, error: "uniqueId is required" });
-    const result = await makeApiRequest(`/instagram/contact?uniqueId=${uniqueId}`);
+    const result = await makeApiRequest(`/instagram/contact?uniqueId=${sanitizeId(String(uniqueId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -98,10 +119,10 @@ app.get("/api/instagram/content-detail", async (req: Request, res: Response) => 
   try {
     const { contentId } = req.query;
     if (!contentId) return res.status(400).json({ success: false, error: "contentId is required" });
-    const result = await makeApiRequest(`/instagram/content-detail?contentId=${contentId}`);
+    const result = await makeApiRequest(`/instagram/content-detail?contentId=${encodeURIComponent(String(contentId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -109,10 +130,10 @@ app.get("/api/instagram/performance", async (req: Request, res: Response) => {
   try {
     const { uniqueId } = req.query;
     if (!uniqueId) return res.status(400).json({ success: false, error: "uniqueId is required" });
-    const result = await makeApiRequest(`/instagram/performance?uniqueId=${uniqueId}`);
+    const result = await makeApiRequest(`/instagram/performance?uniqueId=${sanitizeId(String(uniqueId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -120,10 +141,10 @@ app.get("/api/instagram/performance-history", async (req: Request, res: Response
   try {
     const { uniqueId } = req.query;
     if (!uniqueId) return res.status(400).json({ success: false, error: "uniqueId is required" });
-    const result = await makeApiRequest(`/instagram/performance-history?uniqueId=${uniqueId}`);
+    const result = await makeApiRequest(`/instagram/performance-history?uniqueId=${sanitizeId(String(uniqueId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -131,10 +152,10 @@ app.get("/api/instagram/sponsorship", async (req: Request, res: Response) => {
   try {
     const { uniqueId } = req.query;
     if (!uniqueId) return res.status(400).json({ success: false, error: "uniqueId is required" });
-    const result = await makeApiRequest(`/instagram/sponsorship?uniqueId=${uniqueId}`);
+    const result = await makeApiRequest(`/instagram/sponsorship?uniqueId=${sanitizeId(String(uniqueId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -142,10 +163,10 @@ app.get("/api/instagram/audience", async (req: Request, res: Response) => {
   try {
     const { uniqueId } = req.query;
     if (!uniqueId) return res.status(400).json({ success: false, error: "uniqueId is required" });
-    const result = await makeApiRequest(`/instagram/audience?uniqueId=${uniqueId}`);
+    const result = await makeApiRequest(`/instagram/audience?uniqueId=${sanitizeId(String(uniqueId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -159,7 +180,7 @@ app.post("/api/instagram/search", async (req: Request, res: Response) => {
     const result = await makeApiRequest("/instagram/search", "POST", searchBody);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -170,7 +191,7 @@ app.post("/api/instagram/natural-language-search", async (req: Request, res: Res
     const result = await makeApiRequest("/instagram/nls", "POST", { query, pageSize, offset });
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -179,7 +200,7 @@ app.get("/api/instagram/niches", async (_req: Request, res: Response) => {
     const result = await makeApiRequest("/instagram/niches");
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -187,10 +208,10 @@ app.get("/api/youtube/profile", async (req: Request, res: Response) => {
   try {
     const { channelId } = req.query;
     if (!channelId) return res.status(400).json({ success: false, error: "channelId is required" });
-    const result = await makeApiRequest(`/youtube/profile?channelId=${channelId}`);
+    const result = await makeApiRequest(`/youtube/profile?channelId=${encodeURIComponent(String(channelId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -204,7 +225,7 @@ app.post("/api/youtube/search", async (req: Request, res: Response) => {
     const result = await makeApiRequest("/youtube/search", "POST", searchBody);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -212,10 +233,10 @@ app.get("/api/youtube/performance", async (req: Request, res: Response) => {
   try {
     const { channelId } = req.query;
     if (!channelId) return res.status(400).json({ success: false, error: "channelId is required" });
-    const result = await makeApiRequest(`/youtube/performance?channelId=${channelId}`);
+    const result = await makeApiRequest(`/youtube/performance?channelId=${encodeURIComponent(String(channelId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -223,10 +244,10 @@ app.get("/api/youtube/performance-history", async (req: Request, res: Response) 
   try {
     const { channelId } = req.query;
     if (!channelId) return res.status(400).json({ success: false, error: "channelId is required" });
-    const result = await makeApiRequest(`/youtube/performance-history?channelId=${channelId}`);
+    const result = await makeApiRequest(`/youtube/performance-history?channelId=${encodeURIComponent(String(channelId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -234,10 +255,10 @@ app.get("/api/youtube/content-detail", async (req: Request, res: Response) => {
   try {
     const { contentId } = req.query;
     if (!contentId) return res.status(400).json({ success: false, error: "contentId is required" });
-    const result = await makeApiRequest(`/youtube/content-detail?contentId=${contentId}`);
+    const result = await makeApiRequest(`/youtube/content-detail?contentId=${encodeURIComponent(String(contentId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -245,10 +266,10 @@ app.get("/api/youtube/sponsorship", async (req: Request, res: Response) => {
   try {
     const { channelId } = req.query;
     if (!channelId) return res.status(400).json({ success: false, error: "channelId is required" });
-    const result = await makeApiRequest(`/youtube/sponsorship?channelId=${channelId}`);
+    const result = await makeApiRequest(`/youtube/sponsorship?channelId=${encodeURIComponent(String(channelId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -256,10 +277,10 @@ app.get("/api/youtube/contact", async (req: Request, res: Response) => {
   try {
     const { channelId } = req.query;
     if (!channelId) return res.status(400).json({ success: false, error: "channelId is required" });
-    const result = await makeApiRequest(`/youtube/contact?channelId=${channelId}`);
+    const result = await makeApiRequest(`/youtube/contact?channelId=${encodeURIComponent(String(channelId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -267,10 +288,10 @@ app.get("/api/youtube/audience", async (req: Request, res: Response) => {
   try {
     const { channelId } = req.query;
     if (!channelId) return res.status(400).json({ success: false, error: "channelId is required" });
-    const result = await makeApiRequest(`/youtube/audience?channelId=${channelId}`);
+    const result = await makeApiRequest(`/youtube/audience?channelId=${encodeURIComponent(String(channelId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -281,7 +302,7 @@ app.post("/api/youtube/natural-language-search", async (req: Request, res: Respo
     const result = await makeApiRequest("/youtube/nls", "POST", { query, pageSize, offset });
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -290,7 +311,7 @@ app.get("/api/youtube/topics", async (_req: Request, res: Response) => {
     const result = await makeApiRequest("/youtube/topics");
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -299,7 +320,7 @@ app.get("/api/youtube/niches", async (_req: Request, res: Response) => {
     const result = await makeApiRequest("/youtube/niches");
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -307,10 +328,10 @@ app.get("/api/tiktok/profile", async (req: Request, res: Response) => {
   try {
     const { uniqueId } = req.query;
     if (!uniqueId) return res.status(400).json({ success: false, error: "uniqueId is required" });
-    const result = await makeApiRequest(`/tiktok/profile?uniqueId=${uniqueId}`);
+    const result = await makeApiRequest(`/tiktok/profile?uniqueId=${sanitizeId(String(uniqueId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -324,7 +345,7 @@ app.post("/api/tiktok/search", async (req: Request, res: Response) => {
     const result = await makeApiRequest("/tiktok/search", "POST", searchBody);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -332,10 +353,10 @@ app.get("/api/tiktok/contact", async (req: Request, res: Response) => {
   try {
     const { uniqueId } = req.query;
     if (!uniqueId) return res.status(400).json({ success: false, error: "uniqueId is required" });
-    const result = await makeApiRequest(`/tiktok/contact?uniqueId=${uniqueId}`);
+    const result = await makeApiRequest(`/tiktok/contact?uniqueId=${sanitizeId(String(uniqueId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -343,10 +364,10 @@ app.get("/api/tiktok/performance", async (req: Request, res: Response) => {
   try {
     const { uniqueId } = req.query;
     if (!uniqueId) return res.status(400).json({ success: false, error: "uniqueId is required" });
-    const result = await makeApiRequest(`/tiktok/performance?uniqueId=${uniqueId}`);
+    const result = await makeApiRequest(`/tiktok/performance?uniqueId=${sanitizeId(String(uniqueId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -354,10 +375,10 @@ app.get("/api/tiktok/performance-history", async (req: Request, res: Response) =
   try {
     const { uniqueId } = req.query;
     if (!uniqueId) return res.status(400).json({ success: false, error: "uniqueId is required" });
-    const result = await makeApiRequest(`/tiktok/performance-history?uniqueId=${uniqueId}`);
+    const result = await makeApiRequest(`/tiktok/performance-history?uniqueId=${sanitizeId(String(uniqueId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -365,10 +386,10 @@ app.get("/api/tiktok/content-detail", async (req: Request, res: Response) => {
   try {
     const { contentId } = req.query;
     if (!contentId) return res.status(400).json({ success: false, error: "contentId is required" });
-    const result = await makeApiRequest(`/tiktok/content-detail?contentId=${contentId}`);
+    const result = await makeApiRequest(`/tiktok/content-detail?contentId=${encodeURIComponent(String(contentId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -376,10 +397,10 @@ app.get("/api/tiktok/audience", async (req: Request, res: Response) => {
   try {
     const { uniqueId } = req.query;
     if (!uniqueId) return res.status(400).json({ success: false, error: "uniqueId is required" });
-    const result = await makeApiRequest(`/tiktok/audience?uniqueId=${uniqueId}`);
+    const result = await makeApiRequest(`/tiktok/audience?uniqueId=${sanitizeId(String(uniqueId))}`);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -390,7 +411,7 @@ app.post("/api/tiktok/natural-language-search", async (req: Request, res: Respon
     const result = await makeApiRequest("/tiktok/nls", "POST", { query, pageSize, offset });
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
@@ -399,7 +420,7 @@ app.get("/api/tiktok/niches", async (_req: Request, res: Response) => {
     const result = await makeApiRequest("/tiktok/niches");
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
+    handleError(error, res);
   }
 });
 
